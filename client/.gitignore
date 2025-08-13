@@ -1,0 +1,25 @@
+# Node.js / Vite 관련 파일 무시
+
+# 의존성 폴더
+/node_modules
+/client/node_modules
+/server/node_modules
+
+# 빌드 결과물
+/dist
+/client/dist
+
+# 로그 파일
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 환경 변수 파일
+.env
+.env.local
+.env.*.local
+
+# 운영체제 관련 파일
+.DS_Store
+Thumbs.db
