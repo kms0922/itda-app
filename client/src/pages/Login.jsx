@@ -1,38 +1,51 @@
-// client/src/pages/Login.jsx
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // useNavigate 임포트
+import { Link, useNavigate } from 'react-router-dom';
 import '../App.css';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
-  const navigate = useNavigate(); // 페이지 이동 함수
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('--- 로그인 시도 시작 ---');
     setMessage('');
 
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await response.json();
+    try {
+      const loginData = { email, password };
+      console.log('2. 서버로 보낼 데이터:', loginData);
 
-    if (data.success) {
-      // ▼▼▼ 로그인 성공 시 ▼▼▼
-      // 1. 사용자 정보를 localStorage에 저장
-      localStorage.setItem('user', JSON.stringify({
-        id: data.userId,
-        name: data.name,
-        userType: data.userType
-      }));
-      // 2. 프로필 등록 페이지로 이동
-      navigate('/profile-setup');
-      // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-    } else {
-      setMessage(`로그인 실패: ${data.message}`);
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginData),
+      });
+
+      console.log('3. 서버 응답 받음:', response);
+
+      if (!response.ok) {
+        throw new Error(`HTTP 에러! 상태: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('4. 서버로부터 받은 데이터:', data);
+
+      if (data.success) {
+        localStorage.setItem('user', JSON.stringify({
+          id: data.userId,
+          name: data.name,
+          userType: data.userType
+        }));
+        console.log('5. 로그인 성공! 대시보드로 이동합니다.');
+        navigate('/dashboard');
+      } else {
+        setMessage(`로그인 실패: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('!!! 로그인 과정 중 에러 발생 !!!', error);
+      setMessage('오류가 발생했습니다. 콘솔 창을 확인해주세요.');
     }
   };
 

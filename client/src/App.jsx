@@ -1,8 +1,11 @@
-// client/src/App.jsx
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
-import ProfileSetup from './pages/ProfileSetup'; // 임포트 추가
+import ProfileSetup from './pages/ProfileSetup';
+import Dashboard from './pages/Dashboard';
+import UserList from './pages/UserList';
+import UserProfile from './pages/UserProfile';
+import MatchRequests from './pages/MatchRequests';
 import './App.css';
 
 // 시작 페이지 컴포넌트
@@ -18,7 +21,6 @@ function Home() {
   );
 }
 
-
 function App() {
   return (
     <BrowserRouter>
@@ -26,7 +28,11 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/profile-setup" element={<ProfileSetup />} /> {/* 경로 추가 */}
+        <Route path="/profile-setup" element={<ProfileSetup />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/users" element={<UserList />} />
+        <Route path="/users/:userId" element={<UserProfile />} />
+        <Route path="/match-requests" element={<MatchRequests />} />
       </Routes>
     </BrowserRouter>
   );
