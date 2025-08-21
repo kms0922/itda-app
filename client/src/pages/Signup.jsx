@@ -1,64 +1,62 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+// client/src/pages/Signup.jsx (수정 후 전체 코드)
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import '../App.css';
 
 function Signup() {
+  const location = useLocation(); // 라우터의 상태 정보를 가져오기 위한 훅
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [userType, setUserType] = useState('youth');
+  // 시작 페이지에서 전달받은 userType으로 상태 초기화, 없으면 'youth' 기본값
+  const [userType, setUserType] = useState(location.state?.userType || 'youth');
   const [message, setMessage] = useState('');
+
+  // location.state가 바뀔 때마다 userType을 업데이트 (뒤로가기 등으로 페이지 재진입 시)
+  useEffect(() => {
+    if (location.state?.userType) {
+      setUserType(location.state.userType);
+    }
+  }, [location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('--- 회원가입 시도 시작 ---');
-    setMessage('');
-
-    try {
-      const signupData = { email, password, name, userType };
-      console.log('2. 서버로 보낼 데이터:', signupData);
-
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(signupData),
-      });
-
-      console.log('3. 서버 응답 받음:', response);
-
-      if (!response.ok) {
-        throw new Error(`HTTP 에러! 상태: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('4. 서버로부터 받은 데이터:', data);
-
-      if (data.success) {
-        setMessage(`회원가입 성공! 사용자 ID: ${data.userId}. 이제 로그인 해주세요.`);
-      } else {
-        setMessage(`회원가입 실패: ${data.message}`);
-      }
-    } catch (error) {
-      console.error('!!! 회원가입 과정 중 에러 발생 !!!', error);
-      setMessage('오류가 발생했습니다. 콘솔 창을 확인해주세요.');
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name, userType }),
+    });
+    const data = await response.json();
+    if (data.success) {
+      setMessage(`회원가입 성공! 이제 로그인 해주세요.`);
+    } else {
+      setMessage(`회원가입 실패: ${data.message}`);
     }
   };
 
   return (
     <div className="App">
-      <nav style={{ padding: '1rem', textAlign: 'left' }}><Link to="/"><button>← 뒤로가기</button></Link></nav>
-      <h1>잇다 회원가입</h1>
-      <form onSubmit={handleSubmit}>
-        <div className="user-type-selector">
-          <label><input type="radio" value="youth" checked={userType === 'youth'} onChange={(e) => setUserType(e.target.value)} /> 청년</label>
-          <label><input type="radio" value="elderly" checked={userType === 'elderly'} onChange={(e) => setUserType(e.target.value)} /> 어르신</label>
-        </div>
-        <div><input type="email" placeholder="이메일" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-        <div><input type="password" placeholder="비밀번호" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
-        <div><input type="text" placeholder="이름" value={name} onChange={(e) => setName(e.target.value)} required /></div>
-        <button type="submit">가입하기</button>
-      </form>
-      {message && <p>{message}</p>}
+      <h1>
+        {userType === 'youth' ? '청년' : '어르신'} 회원가입
+      </h1>
+      <p style={{color: 'var(--text-light)', marginBottom: '2rem'}}>
+        {userType === 'youth' ? 
+          '의미있는 활동을 통해 따뜻한 마음을 나눠주세요.' : 
+          '잇다와 함께 새로운 친구를 만나보세요.'}
+      </p>
+      <div className="form-container">
+        <form onSubmit={handleSubmit} style={{margin: 0, padding: 0, boxShadow: 'none'}}>
+          <input type="email" placeholder="이메일" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="password" placeholder="비밀번호" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input type="text" placeholder="이름" value={name} onChange={(e) => setName(e.target.value)} required />
+          <button type="submit" className="primary">가입하기</button>
+        </form>
+        {message && <p>{message}</p>}
+      </div>
+      <div className="page-footer">
+        <Link to="/"><button className="secondary">← 처음으로</button></Link>
+      </div>
     </div>
   );
 }

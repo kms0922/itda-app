@@ -1,42 +1,249 @@
-#root {
-  max-width: 1280px;
+/* client/src/App.css */
+
+/* --- 잇:다 디자인 시스템 --- */
+:root {
+  /* 색상 팔레트 */
+  --primary-green: #274C3A; /* 주조색 (깊은 녹색) */
+  --accent-orange: #FF7F50; /* 강조색 (산호색) */
+  --bg-ivory: #FFF8E1;      /* 배경색 (상아색) */
+  --bg-light: #F8F9FA;      /* 부드러운 배경색 */
+  --text-primary: #274C3A;
+  --text-dark: #333;
+  --text-light: #666;
+  --border-color: #E0E0E0;
+  --card-background: #FFFFFF;
+
+  /* 폰트 */
+  --font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* --- 기본 설정 --- */
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- 전체 레이아웃 --- */
+.App {
+  max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem 1rem;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* --- 타이포그래피 --- */
+h1, h2, h3, h4 {
+  color: var(--text-primary);
+  margin-top: 0;
+  font-weight: 600;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+h1 { font-size: 2.25rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.25rem; }
+
+/* --- 버튼 스타일 --- */
+button {
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  margin: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* 주 버튼 (녹색) */
+button.primary {
+  background-color: var(--primary-green);
+  color: white;
+}
+button.primary:hover { background-color: #1a3326; }
+
+/* 강조 버튼 (주황색) */
+button.accent {
+  background-color: var(--accent-orange);
+  color: white;
+}
+button.accent:hover { background-color: #e66a3f; }
+
+/* 보조 버튼 */
+button.secondary {
+  background-color: var(--card-background);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+button.secondary:hover { background-color: #f1f3f5; }
+
+
+/* --- 폼(Form) 스타일 --- */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 450px;
+  margin: 2rem auto;
+  padding: 2.5rem;
+  background-color: var(--card-background);
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(39, 76, 58, 0.1);
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="date"],
+textarea,
+select {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(39, 76, 58, 0.1);
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* --- 카드 스타일 --- */
 .card {
-  padding: 2em;
+  background-color: var(--card-background);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  box-shadow: 0 4px 20px rgba(39, 76, 58, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.read-the-docs {
-  color: #888;
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(39, 76, 58, 0.12);
 }
+
+.card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* --- 어르신용 특별 스타일 --- */
+.senior-friendly h1 { font-size: 2.5rem; }
+.senior-friendly p { font-size: 1.25rem; line-height: 1.8; }
+.senior-friendly button { padding: 1rem 2rem; font-size: 1.25rem; border-radius: 16px; }
+.senior-friendly input, .senior-friendly textarea { padding: 1rem; font-size: 1.25rem; }
+
+/* --- 새로운 카드 디자인 스타일 --- */
+.user-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.user-card-new {
+  background-color: var(--card-background);
+  border-radius: 24px;
+  padding: 1.5rem;
+  text-align: left;
+  box-shadow: 0 4px 20px rgba(39, 76, 58, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--border-color);
+}
+
+.user-card-new:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(39, 76, 58, 0.12);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.ai-badge {
+  background-color: var(--accent-orange);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.match-score {
+  background-color: #e7f5ff;
+  color: #1c7ed6;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.card-body {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.profile-icon {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  background-color: var(--bg-ivory);
+}
+
+.card-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+}
+
+.card-info p {
+  margin: 0 0 0.75rem 0;
+  color: var(--text-light);
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.tag {
+  background-color: #f1f3f5;
+  color: var(--text-light);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+}
+
+/* client/src/App.css 에 추가 */
+.avatar-selector { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1rem; }
+.avatar-selector img { width: 64px; height: 64px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: border-color 0.2s; }
+.avatar-selector img.selected { border-color: var(--accent-orange); }
+.profile-picture { width: 128px; height: 128px; border-radius: 50%; margin: 0 auto 1rem; display: block; object-fit: cover; }

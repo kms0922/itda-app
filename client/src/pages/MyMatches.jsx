@@ -1,16 +1,12 @@
-// client/src/pages/MyMatches.jsx (전체 코드)
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../App.css';
 
-// MatchCard 컴포넌트에 onComplete 라는 새로운 props를 추가합니다.
 function MatchCard({ match, currentUser, onComplete }) {
   const [view, setView] = useState('log_activity');
   const [activity, setActivity] = useState(null);
-
   const [activityDate, setActivityDate] = useState('');
   const [description, setDescription] = useState('');
-
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
 
@@ -20,7 +16,6 @@ function MatchCard({ match, currentUser, onComplete }) {
 
   const handleActivitySubmit = async () => {
     if (!activityDate || !description) return alert('날짜와 활동 내용을 모두 입력해주세요.');
-
     const response = await fetch('/api/activities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -34,10 +29,9 @@ function MatchCard({ match, currentUser, onComplete }) {
       alert(data.message);
     }
   };
-
+  
   const handleReviewSubmit = async () => {
     if (!comment) return alert('후기 내용을 입력해주세요.');
-
     const response = await fetch('/api/reviews', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -52,26 +46,23 @@ function MatchCard({ match, currentUser, onComplete }) {
     const data = await response.json();
     alert(data.message);
     if (data.success) {
-      // ▼▼▼ 후기 제출 성공 시, 부모 컴포넌트의 onComplete 함수를 호출 ▼▼▼
       onComplete(match.matchId);
     }
   };
 
   return (
-    <div className="match-card">
+    <div className="card">
       <h3>{partner.name}님과 매칭 중</h3>
-
       {view === 'log_activity' && (
-        <div className="activity-form">
+        <div className="form-container" style={{margin: '1rem 0', padding: '1.5rem', boxShadow: 'none'}}>
           <h4>1. 활동 기록하기</h4>
           <input type="date" value={activityDate} onChange={e => setActivityDate(e.target.value)} />
           <input type="text" placeholder="활동 내용 (예: 함께 산책)" value={description} onChange={e => setDescription(e.target.value)} />
-          <button onClick={handleActivitySubmit}>기록</button>
+          <button onClick={handleActivitySubmit} className="primary">기록</button>
         </div>
       )}
-
       {view === 'leave_review' && (
-        <div className="review-form">
+        <div className="form-container" style={{margin: '1rem 0', padding: '1.5rem', boxShadow: 'none'}}>
           <h4>2. 활동 후기 남기기</h4>
           <div>
             <label>만족도: </label>
@@ -84,13 +75,7 @@ function MatchCard({ match, currentUser, onComplete }) {
             </select>
           </div>
           <textarea placeholder="어떤 활동이었나요? 간단한 후기를 남겨주세요." value={comment} onChange={e => setComment(e.target.value)} />
-          <button onClick={handleReviewSubmit}>후기 제출</button>
-        </div>
-      )}
-
-      {view === 'completed' && (
-        <div className="completed-message">
-          <p>모든 활동이 기록되었습니다. 감사합니다!</p>
+          <button onClick={handleReviewSubmit} className="accent">후기 제출</button>
         </div>
       )}
     </div>
@@ -112,21 +97,21 @@ function MyMatches() {
     }
   }, []);
 
-  // ▼▼▼ 완료된 매칭을 목록에서 제거하는 함수 (신규 추가) ▼▼▼
   const handleMatchCompletion = (completedMatchId) => {
     setMatches(prevMatches => prevMatches.filter(match => match.matchId !== completedMatchId));
   };
 
   return (
     <div className="App">
-      <nav style={{ padding: '1rem', textAlign: 'left' }}><Link to="/dashboard"><button>← 대시보드</button></Link></nav>
       <h1>나의 매칭 현황</h1>
       <div className="match-list">
         {matches.length > 0 && user ? 
-          // ▼▼▼ MatchCard에 onComplete prop 전달 ▼▼▼
           matches.map(match => <MatchCard key={match.matchId} match={match} currentUser={user} onComplete={handleMatchCompletion} />) : 
           <p>아직 성사된 매칭이 없습니다.</p>
         }
+      </div>
+      <div className="page-footer">
+        <Link to="/dashboard"><button className="secondary">← 대시보드로</button></Link>
       </div>
     </div>
   );

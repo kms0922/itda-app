@@ -1,9 +1,8 @@
+// server/index.js (프로필 사진/태그 기능 추가된 최종 버전)
 const express = require('express');
 const app = express();
 const knexConfig = require('./knexfile').development;
 const knex = require('knex')(knexConfig);
-
-console.log('--- [SERVER CODE VERSION: FINAL_RESET_AUG20] ---'); // 버전 확인용
 
 const HOST = '127.0.0.1';
 const PORT = 5000;
@@ -31,30 +30,23 @@ app.post('/api/login', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: '로그인 중 오류' }); }
 });
 
+// [POST] /api/profile : 프로필 저장/수정 API (profileImageUrl, tags 추가)
 app.post('/api/profile', async (req, res) => {
-  const { userId, introduction, region, availableTime, experience, desiredActivity } = req.body;
+  const { userId, introduction, region, availableTime, experience, desiredActivity, profileImageUrl, tags } = req.body;
   if (!userId) {
     return res.status(400).json({ success: false, message: '사용자 ID가 필요합니다.' });
   }
-
   try {
-    const profileData = { userId, introduction, region, availableTime, experience, desiredActivity };
-
-    // 이미 프로필이 있는지 확인합니다.
+    const profileData = { userId, introduction, region, availableTime, experience, desiredActivity, profileImageUrl, tags };
     const existingProfile = await knex('profiles').where({ userId }).first();
-
     if (existingProfile) {
-      // 프로필이 이미 있으면, UPDATE(수정)를 실행합니다.
       await knex('profiles').where({ userId }).update(profileData);
       res.status(200).json({ success: true, message: '프로필이 성공적으로 수정되었습니다.' });
     } else {
-      // 프로필이 없으면, INSERT(생성)를 실행합니다.
       await knex('profiles').insert(profileData);
       res.status(201).json({ success: true, message: '프로필이 성공적으로 등록되었습니다.' });
     }
-  } catch (error) {
-    res.status(500).json({ success: false, message: '프로필 처리 중 오류 발생', error: error.message });
-  }
+  } catch (error) { res.status(500).json({ success: false, message: '프로필 처리 중 오류' }); }
 });
 
 app.get('/api/profile/check/:userId', async (req, res) => {
@@ -65,11 +57,15 @@ app.get('/api/profile/check/:userId', async (req, res) => {
     } catch (error) { res.status(500).json({ message: '프로필 확인 중 오류' }); }
 });
 
+// [GET] /api/users : 매칭 상대 목록 조회 API (profileImageUrl, tags 추가)
 app.get('/api/users', async (req, res) => {
     const { userType } = req.query;
     const targetUserType = userType === 'youth' ? 'elderly' : 'youth';
     try {
-        const users = await knex('users').join('profiles', 'users.id', '=', 'profiles.userId').where('users.userType', targetUserType).select('users.id', 'users.name', 'profiles.introduction', 'profiles.region');
+        const users = await knex('users')
+            .join('profiles', 'users.id', '=', 'profiles.userId')
+            .where('users.userType', targetUserType)
+            .select('users.id', 'users.name', 'profiles.introduction', 'profiles.region', 'profiles.profileImageUrl', 'profiles.tags');
         res.status(200).json(users);
     } catch (error) { res.status(500).json({ success: false, message: '사용자 목록 조회 중 오류' }); }
 });
