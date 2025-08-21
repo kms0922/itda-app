@@ -58,6 +58,7 @@ function Dashboard() {
           {/* ▼▼▼ '받은 매칭 요청' 버튼 추가 ▼▼▼ */}
           <Link to="/match-requests"><button>받은 매칭 요청 보기</button></Link>
           <Link to="/profile-setup"><button>내 프로필 관리</button></Link>
+          <Link to="/my-matches"><button>나의 매칭 현황</button></Link>
         </div>
       ) : (
         // 프로필이 없는 사용자에게 보여줄 내용

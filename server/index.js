@@ -106,6 +106,54 @@ app.post('/api/matches/respond', async (req, res) => {
     } catch (error) { res.status(500).json({ message: '응답 처리 중 오류' }); }
 });
 
+
+// [GET] /api/matches/accepted/:userId : 내가 성사시킨 매칭 목록 API
+app.get('/api/matches/accepted/:userId', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const acceptedMatches = await knex('matches')
+      .where(function() {
+        this.where('requesterId', userId).orWhere('receiverId', userId)
+      })
+      .andWhere('status', 'accepted')
+      .join('users as requester', 'matches.requesterId', 'requester.id')
+      .join('users as receiver', 'matches.receiverId', 'receiver.id')
+      .select(
+        'matches.id as matchId',
+        'requester.id as requesterId',
+        'requester.name as requesterName',
+        'receiver.id as receiverId',
+        'receiver.name as receiverName'
+      );
+    res.json(acceptedMatches);
+  } catch (error) {
+    res.status(500).json({ message: '성사된 매칭 조회 중 오류' });
+  }
+});
+
+// [POST] /api/activities : 활동 기록 API
+app.post('/api/activities', async (req, res) => {
+  const { matchId, activityDate, description } = req.body;
+  try {
+    const [activityId] = await knex('activities').insert({ matchId, activityDate, description });
+    res.status(201).json({ success: true, message: '활동이 기록되었습니다.', activityId });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '활동 기록 중 오류' });
+  }
+});
+
+// [POST] /api/reviews : 후기(피드백) 저장 API
+app.post('/api/reviews', async (req, res) => {
+  const { activityId, reviewerId, revieweeId, rating, comment } = req.body;
+  try {
+    await knex('reviews').insert({ activityId, reviewerId, revieweeId, rating, comment });
+    res.status(201).json({ success: true, message: '소중한 후기를 남겨주셔서 감사합니다.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '후기 저장 중 오류 발생' });
+  }
+});
+
+
 // --- 서버 실행 및 전역 에러 처리 ---
 const server = app.listen(PORT, HOST, () => {
   console.log(`[서버 시작] 잇다 백엔드 서버가 http://${HOST}:${PORT} 에서 실행 중입니다.`);
