@@ -7,6 +7,7 @@ import UserList from './pages/UserList';
 import UserProfile from './pages/UserProfile';
 import MatchRequests from './pages/MatchRequests';
 import MyMatches from './pages/MyMatches';
+import Reviews from './pages/Reviews';
 import './App.css';
 
 // 시작 페이지 컴포넌트
@@ -35,8 +36,10 @@ function App() {
         <Route path="/users/:userId" element={<UserProfile />} />
         <Route path="/match-requests" element={<MatchRequests />} />
         <Route path="/my-matches" element={<MyMatches />} />
+        <Route path="/users/:userId/reviews" element={<Reviews />} /> 
       </Routes>
     </BrowserRouter>
   );
 }
+
 export default App;
