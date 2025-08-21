@@ -32,19 +32,29 @@ app.post('/api/login', async (req, res) => {
 });
 
 app.post('/api/profile', async (req, res) => {
-    const { userId, introduction, region, availableTime, experience, desiredActivity } = req.body;
-    if (!userId) { return res.status(400).json({ success: false, message: '사용자 ID가 필요합니다.' }); }
-    try {
-        const profileData = { userId, introduction, region, availableTime, experience, desiredActivity };
-        const existingProfile = await knex('profiles').where({ userId }).first();
-        if (existingProfile) {
-            await knex('profiles').where({ userId }).update(profileData);
-            res.status(200).json({ success: true, message: '프로필이 성공적으로 수정되었습니다.' });
-        } else {
-            await knex('profiles').insert(profileData);
-            res.status(201).json({ success: true, message: '프로필이 성공적으로 등록되었습니다.' });
-        }
-    } catch (error) { res.status(500).json({ success: false, message: '프로필 처리 중 오류' }); }
+  const { userId, introduction, region, availableTime, experience, desiredActivity } = req.body;
+  if (!userId) {
+    return res.status(400).json({ success: false, message: '사용자 ID가 필요합니다.' });
+  }
+
+  try {
+    const profileData = { userId, introduction, region, availableTime, experience, desiredActivity };
+
+    // 이미 프로필이 있는지 확인합니다.
+    const existingProfile = await knex('profiles').where({ userId }).first();
+
+    if (existingProfile) {
+      // 프로필이 이미 있으면, UPDATE(수정)를 실행합니다.
+      await knex('profiles').where({ userId }).update(profileData);
+      res.status(200).json({ success: true, message: '프로필이 성공적으로 수정되었습니다.' });
+    } else {
+      // 프로필이 없으면, INSERT(생성)를 실행합니다.
+      await knex('profiles').insert(profileData);
+      res.status(201).json({ success: true, message: '프로필이 성공적으로 등록되었습니다.' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: '프로필 처리 중 오류 발생', error: error.message });
+  }
 });
 
 app.get('/api/profile/check/:userId', async (req, res) => {
