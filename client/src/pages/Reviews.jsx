@@ -1,3 +1,4 @@
+// client/src/pages/Reviews.jsx (디자인 개편 후 전체 코드)
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import '../App.css';
@@ -21,17 +22,23 @@ function Reviews() {
   return (
     <div className="App">
       <h1>{revieweeName}님이 받은 후기</h1>
-      <div className="review-list">
+      <div className="review-list" style={{marginTop: '3rem'}}>
         {reviews.length > 0 ? (
           reviews.map((review, index) => (
             <div key={index} className="card">
-              <h4>{review.reviewerName}님의 후기</h4>
-              <StarRating rating={review.rating} />
-              <p>"{review.comment}"</p>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+                <h4 style={{margin: 0}}>{review.reviewerName}님의 후기</h4>
+                <StarRating rating={review.rating} />
+              </div>
+              <p style={{borderLeft: '3px solid var(--primary-green)', opacity: 0.7, paddingLeft: '1rem', margin: 0}}>
+                "{review.comment}"
+              </p>
             </div>
           ))
         ) : (
-          <p>아직 받은 후기가 없습니다.</p>
+          <div className="card" style={{textAlign: 'center'}}>
+            <p>아직 받은 후기가 없습니다.</p>
+          </div>
         )}
       </div>
       <div className="page-footer">

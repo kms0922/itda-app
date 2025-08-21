@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../App.css';
 
@@ -18,14 +18,19 @@ function ProfileForm({ user, existingProfile, onSave, onCancel }) {
   const [desiredActivity, setDesiredActivity] = useState(existingProfile?.desiredActivity || '');
   const [profileImageUrl, setProfileImageUrl] = useState(existingProfile?.profileImageUrl || 'https://placehold.co/128x128/E0E0E0/333?text=?');
   const [tags, setTags] = useState(existingProfile?.tags || '');
+  
+  const fileInputRef = useRef(null);
 
-  const avatars = [
-    'https://placehold.co/128x128/FFC857/333?text=😊',
-    'https://placehold.co/128x128/E9724C/fff?text=😃',
-    'https://placehold.co/128x128/C5283D/fff?text=😄',
-    'https://placehold.co/128x128/48A9A6/fff?text=😎',
-    'https://placehold.co/128x128/274C3A/fff?text=🙂',
-  ];
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImageUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,17 +60,19 @@ function ProfileForm({ user, existingProfile, onSave, onCancel }) {
   return (
     <div className="form-container">
       <form onSubmit={handleSubmit} style={{margin: 0, padding: 0, boxShadow: 'none'}}>
-        <h3>프로필 사진 선택</h3>
-        <div className="avatar-selector">
-          {avatars.map(avatar => (
-            <img 
-              key={avatar} 
-              src={avatar} 
-              alt="avatar" 
-              className={profileImageUrl === avatar ? 'selected' : ''}
-              onClick={() => setProfileImageUrl(avatar)} 
-            />
-          ))}
+        <h3>프로필 사진</h3>
+        <div className="profile-image-uploader">
+          <img src={profileImageUrl} alt="Profile Preview" className="profile-picture-preview" />
+          <button type="button" onClick={() => fileInputRef.current.click()} className="secondary">
+            사진 변경하기
+          </button>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleImageChange} 
+            style={{ display: 'none' }} 
+            accept="image/*" 
+          />
         </div>
 
         {user.userType === 'youth' ? (

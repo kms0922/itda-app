@@ -7,7 +7,7 @@ const knex = require('knex')(knexConfig);
 const HOST = '127.0.0.1';
 const PORT = 5000;
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 // --- API 핸들러들 ---
 app.post('/api/register', async (req, res) => {
@@ -178,6 +178,41 @@ app.get('/api/reviews/:userId', async (req, res) => {
     res.json(reviews);
   } catch (error) {
     res.status(500).json({ message: '후기 목록 조회 중 오류 발생' });
+  }
+});
+
+// [GET] /api/matches/score/:userId1/:userId2 : 두 사용자 간의 매칭 스코어 계산 API
+app.get('/api/matches/score/:userId1/:userId2', async (req, res) => {
+  const { userId1, userId2 } = req.params;
+  try {
+    const user1Profile = await knex('profiles').where({ userId: userId1 }).first();
+    const user2Profile = await knex('profiles').where({ userId: userId2 }).first();
+
+    if (!user1Profile || !user2Profile) {
+      return res.status(404).json({ message: '프로필 정보를 찾을 수 없습니다.' });
+    }
+
+    let score = 50; // 기본 점수
+
+    // 1. 관심사 태그 유사도 (최대 30점)
+    if (user1Profile.tags && user2Profile.tags) {
+      const tags1 = user1Profile.tags.split(',').map(t => t.trim());
+      const tags2 = user2Profile.tags.split(',').map(t => t.trim());
+      const commonTags = tags1.filter(tag => tags2.includes(tag));
+      score += Math.min(commonTags.length * 10, 30);
+    }
+
+    // 2. 지역 근접도 (단순히 같으면 20점)
+    if (user1Profile.region === user2Profile.region) {
+      score += 20;
+    }
+
+    // 점수가 100점을 넘지 않도록 보정
+    const finalScore = Math.min(score, 100);
+
+    res.json({ matchScore: finalScore });
+  } catch (error) {
+    res.status(500).json({ message: '매칭 스코어 계산 중 오류 발생' });
   }
 });
 
