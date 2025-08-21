@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../App.css';
 
-// 하나의 매칭 카드를 관리하는 컴포넌트
-function MatchCard({ match, currentUser }) {
-  const [view, setView] = useState('log_activity'); // 'log_activity', 'leave_review', 'completed'
+// MatchCard 컴포넌트에 onComplete 라는 새로운 props를 추가합니다.
+function MatchCard({ match, currentUser, onComplete }) {
+  const [view, setView] = useState('log_activity');
   const [activity, setActivity] = useState(null);
 
   const [activityDate, setActivityDate] = useState('');
@@ -18,7 +18,6 @@ function MatchCard({ match, currentUser }) {
     { id: match.receiverId, name: match.receiverName } : 
     { id: match.requesterId, name: match.requesterName };
 
-  // 활동 기록 제출 핸들러
   const handleActivitySubmit = async () => {
     if (!activityDate || !description) return alert('날짜와 활동 내용을 모두 입력해주세요.');
 
@@ -30,13 +29,12 @@ function MatchCard({ match, currentUser }) {
     const data = await response.json();
     if (data.success) {
       setActivity({ id: data.activityId });
-      setView('leave_review'); // 활동 기록 성공 시 후기 남기기 뷰로 전환
+      setView('leave_review');
     } else {
       alert(data.message);
     }
   };
 
-  // 후기 제출 핸들러
   const handleReviewSubmit = async () => {
     if (!comment) return alert('후기 내용을 입력해주세요.');
 
@@ -54,7 +52,8 @@ function MatchCard({ match, currentUser }) {
     const data = await response.json();
     alert(data.message);
     if (data.success) {
-      setView('completed'); // 후기 남기기 성공 시 완료 뷰로 전환
+      // ▼▼▼ 후기 제출 성공 시, 부모 컴포넌트의 onComplete 함수를 호출 ▼▼▼
+      onComplete(match.matchId);
     }
   };
 
@@ -113,13 +112,19 @@ function MyMatches() {
     }
   }, []);
 
+  // ▼▼▼ 완료된 매칭을 목록에서 제거하는 함수 (신규 추가) ▼▼▼
+  const handleMatchCompletion = (completedMatchId) => {
+    setMatches(prevMatches => prevMatches.filter(match => match.matchId !== completedMatchId));
+  };
+
   return (
     <div className="App">
       <nav style={{ padding: '1rem', textAlign: 'left' }}><Link to="/dashboard"><button>← 대시보드</button></Link></nav>
       <h1>나의 매칭 현황</h1>
       <div className="match-list">
         {matches.length > 0 && user ? 
-          matches.map(match => <MatchCard key={match.matchId} match={match} currentUser={user} />) : 
+          // ▼▼▼ MatchCard에 onComplete prop 전달 ▼▼▼
+          matches.map(match => <MatchCard key={match.matchId} match={match} currentUser={user} onComplete={handleMatchCompletion} />) : 
           <p>아직 성사된 매칭이 없습니다.</p>
         }
       </div>

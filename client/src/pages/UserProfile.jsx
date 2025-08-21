@@ -45,6 +45,9 @@ function UserProfile() {
             <p><strong>활동 경험:</strong> {profile.experience}</p>
           </>
         ) : ( <p><strong>희망 활동:</strong> {profile.desiredActivity}</p> )}
+        <Link to={`/users/${profile.id}/reviews`}>
+          <button className="secondary-button">{profile.name}님이 받은 후기 보기</button>
+        </Link>
         <button onClick={handleMatchRequest}>매칭 신청하기</button>
       </div>
     </div>

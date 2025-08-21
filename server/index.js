@@ -147,9 +147,31 @@ app.post('/api/reviews', async (req, res) => {
   const { activityId, reviewerId, revieweeId, rating, comment } = req.body;
   try {
     await knex('reviews').insert({ activityId, reviewerId, revieweeId, rating, comment });
+    const activity = await knex('activities').where({ id: activityId }).first();
+    if (activity) {
+      await knex('matches').where({ id: activity.matchId }).update({ status: 'completed' });
+    }
     res.status(201).json({ success: true, message: '소중한 후기를 남겨주셔서 감사합니다.' });
   } catch (error) {
     res.status(500).json({ success: false, message: '후기 저장 중 오류 발생' });
+  }
+});
+
+// [GET] /api/reviews/:userId : 특정 사용자가 받은 후기 목록 조회 API
+app.get('/api/reviews/:userId', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const reviews = await knex('reviews')
+      .join('users', 'reviews.reviewerId', 'users.id') // 후기 작성자 정보를 위해 users 테이블과 조인
+      .where('reviews.revieweeId', userId)
+      .select(
+        'reviews.rating',
+        'reviews.comment',
+        'users.name as reviewerName' // 후기 작성자의 이름
+      );
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ message: '후기 목록 조회 중 오류 발생' });
   }
 });
 
