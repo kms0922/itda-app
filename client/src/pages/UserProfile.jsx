@@ -1,3 +1,4 @@
+// client/src/pages/UserProfile.jsx (디자인 개편 후 전체 코드)
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import '../App.css';
@@ -29,25 +30,60 @@ function UserProfile() {
     }
   };
 
-  if (!profile) return <div className="App">프로필 로딩 중...</div>;
+  if (!profile) return <div className="App"><h2>프로필 로딩 중...</h2></div>;
 
   return (
-    <div className="App">
-      <h1>{profile.name}님의 프로필</h1>
-      <div className="card">
-        <p><strong>자기소개:</strong> {profile.introduction}</p>
-        <p><strong>지역:</strong> {profile.region}</p>
-        {profile.userType === 'youth' ? (
-          <>
-            <p><strong>활동 가능 시간:</strong> {profile.availableTime}</p>
-            <p><strong>활동 경험:</strong> {profile.experience}</p>
-          </>
-        ) : ( <p><strong>희망 활동:</strong> {profile.desiredActivity}</p> )}
-        <div style={{textAlign: 'center', marginTop: '1.5rem'}}>
-          <Link to={`/users/${profile.id}/reviews`}><button className="secondary">{profile.name}님이 받은 후기 보기</button></Link>
-          <button onClick={handleMatchRequest} className="accent">매칭 신청하기</button>
+    <div className="App profile-page-container">
+      <header className="profile-header">
+        <div className="profile-picture-container">
+          <img 
+            src={profile.profileImageUrl || 'https://placehold.co/128x128/E0E0E0/333?text=?'} 
+            alt={profile.name} 
+            className="profile-picture-large"
+          />
         </div>
-      </div>
+      </header>
+
+      <main className="profile-content">
+        <div style={{textAlign: 'center', marginBottom: '2rem'}}>
+          <h1 style={{marginBottom: '0.5rem'}}>{profile.name}</h1>
+          <p style={{color: 'var(--text-light)'}}>{profile.region}</p>
+        </div>
+
+        <section className="profile-section">
+          <h2>자기소개</h2>
+          <p>{profile.introduction}</p>
+        </section>
+
+        <section className="profile-section">
+          <h2>관심사 & 활동</h2>
+          <div className="card-tags">
+            {profile.tags && profile.tags.split(',').map(tag => (
+              <span key={tag} className="tag">{tag.trim()}</span>
+            ))}
+          </div>
+        </section>
+
+        <section className="profile-section">
+          <h2>기본 정보</h2>
+          {profile.userType === 'youth' ? (
+            <>
+              <p><strong>활동 가능 시간:</strong> {profile.availableTime}</p>
+              <p><strong>활동 경험:</strong> {profile.experience}</p>
+            </>
+          ) : (
+            <p><strong>희망 활동:</strong> {profile.desiredActivity}</p>
+          )}
+        </section>
+
+        <div className="profile-actions">
+          <Link to={`/users/${profile.id}/reviews`}>
+            <button className="secondary" style={{width: '100%'}}>{profile.name}님이 받은 후기 보기</button>
+          </Link>
+          <button onClick={handleMatchRequest} className="accent" style={{width: '100%'}}>매칭 신청하기</button>
+        </div>
+      </main>
+
       <div className="page-footer">
         <Link to="/users"><button className="secondary">← 목록으로</button></Link>
       </div>
