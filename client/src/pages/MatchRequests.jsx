@@ -1,4 +1,3 @@
-// client/src/pages/MatchRequests.jsx (최종 버전)
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../App.css';
@@ -15,8 +14,7 @@ function MatchRequests() {
       setUser(parsedUser);
       fetch(`/api/matches/received/${parsedUser.id}`)
         .then(res => res.json())
-        .then(data => setRequests(data))
-        .catch(error => console.error("매칭 요청 로딩 실패:", error));
+        .then(data => setRequests(data));
     }
   }, []);
 
@@ -31,25 +29,27 @@ function MatchRequests() {
     setRequests(prevRequests => prevRequests.filter(req => req.matchId !== matchId));
   };
 
-  if (!user) { return <div className="App">로딩 중...</div>; }
-
   return (
     <div className="App">
-      <nav style={{ padding: '1rem', textAlign: 'left' }}><Link to="/dashboard"><button>← 대시보드로 돌아가기</button></Link></nav>
       <h1>받은 매칭 요청</h1>
-      {message && <p className="success-message">{message}</p>}
+      {message && <p>{message}</p>}
       <div className="request-list">
         {requests.length > 0 ? (
           requests.map(req => (
-            <div key={req.matchId} className="request-card">
+            <div key={req.matchId} className="card">
               <p><strong>{req.requesterName}</strong>님으로부터 매칭 요청이 도착했습니다.</p>
-              <div>
-                <button onClick={() => handleResponse(req.matchId, 'accepted')} className="accept-btn">수락</button>
-                <button onClick={() => handleResponse(req.matchId, 'rejected')} className="reject-btn">거절</button>
+              <div style={{textAlign: 'center', marginTop: '1rem'}}>
+                <button onClick={() => handleResponse(req.matchId, 'accepted')} className="primary">수락</button>
+                <button onClick={() => handleResponse(req.matchId, 'rejected')} className="secondary">거절</button>
               </div>
             </div>
           ))
-        ) : ( <p>현재 받은 매칭 요청이 없습니다.</p> )}
+        ) : (
+          <p>현재 받은 매칭 요청이 없습니다.</p>
+        )}
+      </div>
+      <div className="page-footer">
+        <Link to="/dashboard"><button className="secondary">← 대시보드로</button></Link>
       </div>
     </div>
   );

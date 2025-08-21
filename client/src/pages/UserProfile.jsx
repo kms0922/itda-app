@@ -1,4 +1,3 @@
-// client/src/pages/UserProfile.jsx (최종 버전)
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import '../App.css';
@@ -34,9 +33,8 @@ function UserProfile() {
 
   return (
     <div className="App">
-      <nav style={{ padding: '1rem', textAlign: 'left' }}><Link to="/users"><button>← 목록으로</button></Link></nav>
       <h1>{profile.name}님의 프로필</h1>
-      <div className="profile-details">
+      <div className="card">
         <p><strong>자기소개:</strong> {profile.introduction}</p>
         <p><strong>지역:</strong> {profile.region}</p>
         {profile.userType === 'youth' ? (
@@ -45,10 +43,13 @@ function UserProfile() {
             <p><strong>활동 경험:</strong> {profile.experience}</p>
           </>
         ) : ( <p><strong>희망 활동:</strong> {profile.desiredActivity}</p> )}
-        <Link to={`/users/${profile.id}/reviews`}>
-          <button className="secondary-button">{profile.name}님이 받은 후기 보기</button>
-        </Link>
-        <button onClick={handleMatchRequest}>매칭 신청하기</button>
+        <div style={{textAlign: 'center', marginTop: '1.5rem'}}>
+          <Link to={`/users/${profile.id}/reviews`}><button className="secondary">{profile.name}님이 받은 후기 보기</button></Link>
+          <button onClick={handleMatchRequest} className="accent">매칭 신청하기</button>
+        </div>
+      </div>
+      <div className="page-footer">
+        <Link to="/users"><button className="secondary">← 목록으로</button></Link>
       </div>
     </div>
   );
