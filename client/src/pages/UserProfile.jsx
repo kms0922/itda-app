@@ -1,7 +1,18 @@
-// client/src/pages/UserProfile.jsx (디자인 개편 후 전체 코드)
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import '../App.css';
+
+// ▼▼▼ 이 컴포넌트 정의가 누락되었습니다! ▼▼▼
+// 별점 표시 컴포넌트
+const StarRating = ({ rating }) => {
+  const fullStars = Math.round(rating || 0);
+  return (
+    <div className="star-rating">
+      {'★★★★★'.slice(0, fullStars)}{'☆☆☆☆☆'.slice(fullStars)}
+    </div>
+  );
+};
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 function UserProfile() {
   const { userId } = useParams();
@@ -11,6 +22,7 @@ function UserProfile() {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) { setCurrentUser(JSON.parse(storedUser)); }
+    // 상세 프로필 정보를 불러옵니다 (통계 포함)
     fetch(`/api/users/${userId}`).then(res => res.json()).then(data => setProfile(data));
   }, [userId]);
 
@@ -47,7 +59,13 @@ function UserProfile() {
       <main className="profile-content">
         <div style={{textAlign: 'center', marginBottom: '2rem'}}>
           <h1 style={{marginBottom: '0.5rem'}}>{profile.name}</h1>
-          <p style={{color: 'var(--text-light)'}}>{profile.region}</p>
+          <p style={{color: 'var(--text-light)', marginBottom: '1rem'}}>{profile.region}</p>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
+            <StarRating rating={profile.avgRating} />
+            <span style={{color: 'var(--text-light)', fontSize: '1rem'}}>
+              {profile.avgRating} ({profile.reviewCount}개의 후기)
+            </span>
+          </div>
         </div>
 
         <section className="profile-section">
@@ -63,7 +81,7 @@ function UserProfile() {
             ))}
           </div>
         </section>
-
+        
         <section className="profile-section">
           <h2>기본 정보</h2>
           {profile.userType === 'youth' ? (
@@ -83,7 +101,7 @@ function UserProfile() {
           <button onClick={handleMatchRequest} className="accent" style={{width: '100%'}}>매칭 신청하기</button>
         </div>
       </main>
-
+      
       <div className="page-footer">
         <Link to="/users"><button className="secondary">← 목록으로</button></Link>
       </div>

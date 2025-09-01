@@ -1,53 +1,17 @@
-// client/src/pages/UserList.jsx (실제 매칭 스코어 적용)
+// client/src/pages/UserList.jsx (신뢰 시스템 UI 적용)
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../App.css';
 
-// 매칭 스코어를 받아오는 커스텀 훅 (재사용을 위해 분리)
-function useMatchScore(currentUser, otherUser) {
-  const [score, setScore] = useState(null);
-  useEffect(() => {
-    if (currentUser && otherUser) {
-      fetch(`/api/matches/score/${currentUser.id}/${otherUser.id}`)
-        .then(res => res.json())
-        .then(data => setScore(data.matchScore));
-    }
-  }, [currentUser, otherUser]);
-  return score;
-}
-
-// 사용자 카드를 위한 별도 컴포넌트
-function UserCard({ user, currentUser }) {
-  const matchScore = useMatchScore(currentUser, user);
-  const isAIRecommended = matchScore && matchScore >= 85;
-
+// 별점 표시 컴포넌트 (재사용)
+const StarRating = ({ rating }) => {
+  const fullStars = Math.round(rating || 0);
   return (
-    <Link to={`/users/${user.id}`} className="card-link">
-      <div className="user-card-new" style={isAIRecommended ? {border: '2px solid var(--accent-orange)'} : {}}>
-        <div className="card-header">
-          {isAIRecommended && <span className="ai-badge">🔥 AI 추천</span>}
-          {matchScore !== null ? 
-            <span className="match-score">매칭도 {matchScore}%</span> :
-            <span className="match-score">계산 중...</span>
-          }
-        </div>
-        <div className="card-body">
-          <img src={user.profileImageUrl || 'https://placehold.co/80x80/E0E0E0/333?text=?'} alt={user.name} className="profile-icon" style={{objectFit: 'cover', width: '80px', height: '80px'}} />
-          <div className="card-info">
-            <h3>{user.name}</h3>
-            <p>{user.region}</p>
-            <p style={{fontSize: '0.9rem', color: 'var(--text-dark)'}}>{user.introduction}</p>
-          </div>
-        </div>
-        <div className="card-tags">
-          {user.tags && user.tags.split(',').map(tag => (
-            <span key={tag} className="tag">{tag.trim()}</span>
-          ))}
-        </div>
-      </div>
-    </Link>
+    <div className="star-rating" style={{fontSize: '1rem'}}>
+      {'★★★★★'.slice(0, fullStars)}{'☆☆☆☆☆'.slice(fullStars)}
+    </div>
   );
-}
+};
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -68,11 +32,39 @@ function UserList() {
     <div className="App">
       <h1>{currentUser?.userType === 'youth' ? '어르신 찾기' : '청년 찾기'}</h1>
       <p style={{color: 'var(--text-light)', marginBottom: '3rem'}}>
-        나와 잘 맞는 새로운 친구를 만나보세요.
+        신뢰할 수 있는 파트너를 찾아보세요.
       </p>
       <div className="user-list-container">
-        {users.length > 0 && currentUser ? (
-          users.map(user => <UserCard key={user.id} user={user} currentUser={currentUser} />)
+        {users.length > 0 ? (
+          users.map(user => {
+            const avgRating = user.avgRating ? parseFloat(user.avgRating).toFixed(1) : 'N/A';
+            return (
+              <Link to={`/users/${user.id}`} key={user.id} className="card-link">
+                <div className="user-card-new">
+                  <div className="card-body">
+                    <img src={user.profileImageUrl || 'https://placehold.co/80x80/E0E0E0/333?text=?'} alt={user.name} className="profile-icon" style={{objectFit: 'cover', width: '80px', height: '80px'}}/>
+                    <div className="card-info">
+                      <h3>{user.name}</h3>
+                      <p>{user.region}</p>
+                      {/* ▼▼▼ 통계 정보 표시 ▼▼▼ */}
+                      <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0'}}>
+                        <StarRating rating={user.avgRating} />
+                        <span style={{color: 'var(--text-light)', fontSize: '0.9rem'}}>
+                          {avgRating} ({user.reviewCount}개의 후기)
+                        </span>
+                      </div>
+                      {/* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */}
+                    </div>
+                  </div>
+                  <div className="card-tags">
+                    {user.tags && user.tags.split(',').map(tag => (
+                      <span key={tag} className="tag">{tag.trim()}</span>
+                    ))}
+                  </div>
+                </div>
+              </Link>
+            );
+          })
         ) : (
           <p>매칭할 수 있는 사용자가 아직 없습니다.</p>
         )}

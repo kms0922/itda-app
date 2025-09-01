@@ -10,8 +10,8 @@ function MatchCard({ match, currentUser, onComplete }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
 
-  const partner = match.requesterId === currentUser.id ? 
-    { id: match.receiverId, name: match.receiverName } : 
+  const partner = match.requesterId === currentUser.id ?
+    { id: match.receiverId, name: match.receiverName } :
     { id: match.requesterId, name: match.requesterName };
 
   const handleActivitySubmit = async () => {
@@ -35,7 +35,7 @@ function MatchCard({ match, currentUser, onComplete }) {
     const response = await fetch('/api/reviews', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         activityId: activity.id,
         reviewerId: currentUser.id,
         revieweeId: partner.id,
@@ -53,6 +53,10 @@ function MatchCard({ match, currentUser, onComplete }) {
   return (
     <div className="card">
       <h3>{partner.name}님과 매칭 중</h3>
+      <Link to={`/chat/${match.matchId}`} state={{ partnerName: partner.name }}>
+        <button className="primary" style={{width: '100%', marginBottom: '1rem'}}>대화 시작하기</button>
+      </Link>
+      
       {view === 'log_activity' && (
         <div className="form-container" style={{margin: '1rem 0', padding: '1.5rem', boxShadow: 'none'}}>
           <h4>1. 활동 기록하기</h4>
@@ -105,8 +109,8 @@ function MyMatches() {
     <div className="App">
       <h1>나의 매칭 현황</h1>
       <div className="match-list">
-        {matches.length > 0 && user ? 
-          matches.map(match => <MatchCard key={match.matchId} match={match} currentUser={user} onComplete={handleMatchCompletion} />) : 
+        {matches.length > 0 && user ?
+          matches.map(match => <MatchCard key={match.matchId} match={match} currentUser={user} onComplete={handleMatchCompletion} />) :
           <p>아직 성사된 매칭이 없습니다.</p>
         }
       </div>

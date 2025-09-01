@@ -1,33 +1,67 @@
-// server/index.js (프로필 사진/태그 기능 추가된 최종 버전)
+// server/index.js (SSE 방식 최종 전체 코드)
 const express = require('express');
 const app = express();
 const knexConfig = require('./knexfile').development;
 const knex = require('knex')(knexConfig);
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+const cors = require('cors');
 
 const HOST = '127.0.0.1';
 const PORT = 5000;
 
+app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json({ limit: '50mb' }));
 
+
 // --- API 핸들러들 ---
+// [POST] /api/register : 회원가입 (비밀번호 해싱)
 app.post('/api/register', async (req, res) => {
-    const { email, password, name, userType } = req.body;
-    if (!email || !password || !name || !userType) { return res.status(400).json({ success: false, message: '모든 필드를 입력해주세요.' }); }
-    try {
-        const [userId] = await knex('users').insert({ email, password, name, userType });
-        res.status(201).json({ success: true, userId: userId });
-    } catch (error) { res.status(500).json({ success: false, message: '회원가입 중 오류' }); }
+  const { email, password, name, userType } = req.body;
+  if (!email || !password || !name || !userType) {
+    return res.status(400).json({ success: false, message: '모든 필드를 입력해주세요.' });
+  }
+  try {
+    // ▼▼▼ 비밀번호 암호화 로직 추가 ▼▼▼
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const [userId] = await knex('users').insert({
+      email,
+      password: hashedPassword, // 암호화된 비밀번호를 저장
+      name,
+      userType
+    });
+    res.status(201).json({ success: true, userId: userId });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '회원가입 중 오류' });
+  }
 });
 
+// [POST] /api/login : 로그인 (비밀번호 비교)
 app.post('/api/login', async (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) { return res.status(400).json({ success: false, message: '이메일과 비밀번호를 입력해주세요.' }); }
-    try {
-        const user = await knex('users').where({ email }).first();
-        if (!user) { return res.status(404).json({ success: false, message: '존재하지 않는 사용자입니다.' }); }
-        if (user.password !== password) { return res.status(401).json({ success: false, message: '비밀번호가 일치하지 않습니다.' }); }
-        res.status(200).json({ success: true, userId: user.id, name: user.name, userType: user.userType });
-    } catch (error) { res.status(500).json({ success: false, message: '로그인 중 오류' }); }
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: '이메일과 비밀번호를 입력해주세요.' });
+  }
+  try {
+    const user = await knex('users').where({ email }).first();
+    if (!user) {
+      return res.status(404).json({ success: false, message: '존재하지 않는 사용자입니다.' });
+    }
+
+    // ▼▼▼ 암호화된 비밀번호 비교 로직 추가 ▼▼▼
+    const match = await bcrypt.compare(password, user.password);
+
+    if (match) {
+      // 비밀번호 일치
+      res.status(200).json({ success: true, userId: user.id, name: user.name, userType: user.userType });
+    } else {
+      // 비밀번호 불일치
+      return res.status(401).json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: '로그인 중 오류' });
+  }
 });
 
 // [POST] /api/profile : 프로필 저장/수정 API (profileImageUrl, tags 추가)
@@ -57,24 +91,58 @@ app.get('/api/profile/check/:userId', async (req, res) => {
     } catch (error) { res.status(500).json({ message: '프로필 확인 중 오류' }); }
 });
 
-// [GET] /api/users : 매칭 상대 목록 조회 API (profileImageUrl, tags 추가)
+// [GET] /api/users : 매칭 상대 목록 조회 (통계 추가)
 app.get('/api/users', async (req, res) => {
     const { userType } = req.query;
     const targetUserType = userType === 'youth' ? 'elderly' : 'youth';
     try {
         const users = await knex('users')
-            .join('profiles', 'users.id', '=', 'profiles.userId')
+            .leftJoin('profiles', 'users.id', 'profiles.userId')
+            // reviews 테이블을 leftJoin하여 후기 통계를 계산합니다.
+            .leftJoin('reviews', 'users.id', 'reviews.revieweeId')
             .where('users.userType', targetUserType)
-            .select('users.id', 'users.name', 'profiles.introduction', 'profiles.region', 'profiles.profileImageUrl', 'profiles.tags');
+            .select(
+              'users.id', 
+              'users.name', 
+              'profiles.introduction', 
+              'profiles.region', 
+              'profiles.profileImageUrl', 
+              'profiles.tags'
+            )
+            .groupBy('users.id')
+            // knex.raw를 사용하여 SQL 집계 함수를 직접 실행합니다.
+            .count('reviews.id as reviewCount') // 후기 개수
+            .avg('reviews.rating as avgRating'); // 평균 별점
+
         res.status(200).json(users);
     } catch (error) { res.status(500).json({ success: false, message: '사용자 목록 조회 중 오류' }); }
 });
 
+// [GET] /api/users/:id : 특정 사용자 상세 프로필 조회 (통계 추가)
 app.get('/api/users/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const userProfile = await knex('users').join('profiles', 'users.id', 'profiles.userId').where('users.id', id).select('users.id', 'users.name', 'users.userType', 'profiles.*').first();
-        if (userProfile) { res.json(userProfile); } else { res.status(404).json({ message: '사용자를 찾을 수 없습니다.' }); }
+        const userProfile = await knex('users')
+            .leftJoin('profiles', 'users.id', 'profiles.userId')
+            .where('users.id', id)
+            .select('users.id', 'users.name', 'users.userType', 'profiles.*')
+            .first();
+
+        if (userProfile) {
+            // 후기 통계를 별도로 계산하여 프로필 정보에 추가합니다.
+            const stats = await knex('reviews')
+                .where('revieweeId', id)
+                .count('id as reviewCount')
+                .avg('rating as avgRating')
+                .first();
+
+            userProfile.reviewCount = stats.reviewCount || 0;
+            userProfile.avgRating = stats.avgRating ? parseFloat(stats.avgRating.toFixed(1)) : 0; // 소수점 첫째 자리까지
+
+            res.json(userProfile);
+        } else {
+            res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+        }
     } catch (error) { res.status(500).json({ message: '서버 오류' }); }
 });
 
@@ -216,11 +284,79 @@ app.get('/api/matches/score/:userId1/:userId2', async (req, res) => {
   }
 });
 
+// [GET] /api/messages/:matchId : 특정 채팅방의 이전 메시지 불러오기 API
+app.get('/api/messages/:matchId', async (req, res) => {
+  const { matchId } = req.params;
+  try {
+    const messagesFromDb = await knex('messages')
+      .where({ matchId })
+      .join('users', 'messages.senderId', 'users.id')
+      .select('messages.*', 'users.name as senderName')
+      .orderBy('messages.created_at', 'asc'); // DB의 실제 컬럼명 사용
 
-// --- 서버 실행 및 전역 에러 처리 ---
-const server = app.listen(PORT, HOST, () => {
-  console.log(`[서버 시작] 잇다 백엔드 서버가 http://${HOST}:${PORT} 에서 실행 중입니다.`);
+    // ▼▼▼ 데이터 형식 통일 로직 (가장 중요) ▼▼▼
+    // 프론트엔드가 사용하기 편하도록, DB의 'created_at'을 'createdAt'으로 변환하여 전달합니다.
+    const messages = messagesFromDb.map(msg => ({
+        id: msg.id,
+        matchId: msg.matchId,
+        senderId: msg.senderId,
+        content: msg.content,
+        createdAt: msg.created_at, // camelCase로 이름 변경
+        updatedAt: msg.updated_at,
+        senderName: msg.senderName
+    }));
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    res.json(messages);
+  } catch (error) {
+    console.error(`[API /api/messages/:matchId] 에러 발생:`, error);
+    res.status(500).json({ message: '메시지 조회 중 오류 발생' });
+  }
 });
-process.on('uncaughtException', (err) => {
-  console.error('!!! 예상치 못한 서버 오류 발생 !!!:', err);
+
+
+// ▼▼▼ SSE 기능으로 교체된 부분 ▼▼▼
+let clients = {};
+
+// [GET] /api/chat/connect/:matchId : SSE 연결을 위한 엔드포인트
+app.get('/api/chat/connect/:matchId', (req, res) => {
+  const { matchId } = req.params;
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  if (!clients[matchId]) {
+    clients[matchId] = [];
+  }
+  clients[matchId].push(res);
+  console.log(`[SSE] 클라이언트가 방 ${matchId}에 연결되었습니다.`);
+
+  req.on('close', () => {
+    clients[matchId] = clients[matchId].filter(client => client !== res);
+    console.log(`[SSE] 클라이언트가 방 ${matchId}에서 연결 해제되었습니다.`);
+  });
+});
+
+// [POST] /api/chat/message : 새로운 메시지를 보내는 엔드포인트
+app.post('/api/chat/message', async (req, res) => {
+  const { matchId, senderId, content, senderName } = req.body;
+  try {
+    await knex('messages').insert({ matchId, senderId, content });
+    const messageData = { senderId, content, senderName, createdAt: new Date().toISOString() };
+    if (clients[matchId]) {
+      clients[matchId].forEach(client => 
+        client.write(`data: ${JSON.stringify(messageData)}\n\n`)
+      );
+    }
+    res.status(201).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '메시지 저장/전송 중 오류' });
+  }
+});
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+// --- 서버 실행 ---
+app.listen(PORT, HOST, () => {
+  console.log(`[서버 시작] 잇다 백엔드 서버가 http://${HOST}:${PORT} 에서 실행 중입니다.`);
 });
