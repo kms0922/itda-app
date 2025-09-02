@@ -182,15 +182,6 @@ textarea {
   margin-bottom: 1rem;
 }
 
-.ai-badge {
-  background-color: var(--accent-orange);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: bold;
-}
-
 .match-score {
   background-color: #e7f5ff;
   color: #1c7ed6;
@@ -511,3 +502,38 @@ textarea {
   color: #ffc107;
 }
 
+/* user-card-new에 position: relative; 추가 */
+.user-card-new {
+  position: relative;
+  background-color: var(--card-background);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s ease;
+  text-align: left;
+  overflow: hidden; /* 박스가 카드를 벗어나지 않도록 */
+}
+
+.match-score-badge {
+  position: absolute;
+  top: 0.8rem; /* 카드 패딩과 동일하게 */
+  left: 1.5rem; /* 카드 패딩과 동일하게 */
+  background-color: var(--primary-green);
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  z-index: 10;
+}
+
+/* 프로필 아이콘이 매칭도 박스 아래에 위치하도록 마진 추가 */
+.profile-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-top: 1.5rem; /* 매칭도 박스와 겹치지 않도록 */
+}

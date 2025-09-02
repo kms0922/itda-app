@@ -250,30 +250,43 @@ app.get('/api/reviews/:userId', async (req, res) => {
 app.get('/api/matches/score/:userId1/:userId2', async (req, res) => {
   const { userId1, userId2 } = req.params;
   try {
-    const user1Profile = await knex('profiles').where({ userId: userId1 }).first();
-    const user2Profile = await knex('profiles').where({ userId: userId2 }).first();
+    // 각 사용자의 프로필과 후기 통계를 함께 불러옵니다.
+    const getUserData = async (userId) => {
+      const profile = await knex('profiles').where({ userId }).first();
+      const stats = await knex('reviews').where('revieweeId', userId)
+        .count('id as reviewCount').avg('rating as avgRating').first();
+      return { ...profile, ...stats };
+    };
 
-    if (!user1Profile || !user2Profile) {
+    const user1Data = await getUserData(userId1);
+    const user2Data = await getUserData(userId2);
+
+    if (!user1Data || !user2Data) {
       return res.status(404).json({ message: '프로필 정보를 찾을 수 없습니다.' });
     }
 
-    let score = 50; // 기본 점수
+    let score = 30; // 기본 점수
 
-    // 1. 관심사 태그 유사도 (최대 30점)
-    if (user1Profile.tags && user2Profile.tags) {
-      const tags1 = user1Profile.tags.split(',').map(t => t.trim());
-      const tags2 = user2Profile.tags.split(',').map(t => t.trim());
+    // 1. 관심사 일치도 (최대 30점)
+    if (user1Data.tags && user2Data.tags) {
+      const tags1 = user1Data.tags.split(',').map(t => t.trim());
+      const tags2 = user2Data.tags.split(',').map(t => t.trim());
       const commonTags = tags1.filter(tag => tags2.includes(tag));
       score += Math.min(commonTags.length * 10, 30);
     }
 
-    // 2. 지역 근접도 (단순히 같으면 20점)
-    if (user1Profile.region === user2Profile.region) {
+    // 2. 성향 유사성 (같으면 20점)
+    if (user1Data.personality && user1Data.personality === user2Data.personality) {
       score += 20;
     }
 
-    // 점수가 100점을 넘지 않도록 보정
-    const finalScore = Math.min(score, 100);
+    // 3. 후기 평판 (최대 20점)
+    // 두 사용자의 평균 별점을 합산하여 점수에 반영 (최대 10점 * 2 = 20점)
+    const avgRating1 = user1Data.avgRating ? parseFloat(user1Data.avgRating) : 0;
+    const avgRating2 = user2Data.avgRating ? parseFloat(user2Data.avgRating) : 0;
+    score += Math.min((avgRating1 + avgRating2) * 2, 20);
+
+    const finalScore = Math.floor(Math.min(score, 100)); // 100점 만점, 정수로 변환
 
     res.json({ matchScore: finalScore });
   } catch (error) {
