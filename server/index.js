@@ -284,7 +284,7 @@ app.get('/api/matches/score/:userId1/:userId2', async (req, res) => {
   }
 });
 
-// [GET] /api/messages/:matchId : 특정 채팅방의 이전 메시지 불러오기 API
+// [GET] /api/messages/:matchId : 특정 채팅방의 이전 메시지 불러오기 API (시간대 오류 수정)
 app.get('/api/messages/:matchId', async (req, res) => {
   const { matchId } = req.params;
   try {
@@ -292,19 +292,26 @@ app.get('/api/messages/:matchId', async (req, res) => {
       .where({ matchId })
       .join('users', 'messages.senderId', 'users.id')
       .select('messages.*', 'users.name as senderName')
-      .orderBy('messages.created_at', 'asc'); // DB의 실제 컬럼명 사용
+      .orderBy('messages.created_at', 'asc');
 
-    // ▼▼▼ 데이터 형식 통일 로직 (가장 중요) ▼▼▼
-    // 프론트엔드가 사용하기 편하도록, DB의 'created_at'을 'createdAt'으로 변환하여 전달합니다.
-    const messages = messagesFromDb.map(msg => ({
-        id: msg.id,
-        matchId: msg.matchId,
-        senderId: msg.senderId,
-        content: msg.content,
-        createdAt: msg.created_at, // camelCase로 이름 변경
-        updatedAt: msg.updated_at,
-        senderName: msg.senderName
-    }));
+    // ▼▼▼ 시간대 정보 추가 로직 (가장 중요) ▼▼▼
+    // 프론트엔드가 시간을 올바르게 해석할 수 있도록,
+    // DB의 시간 문자열을 표준 ISO 8601 형식 (YYYY-MM-DDTHH:mm:ss.sssZ)으로 변환합니다.
+    const messages = messagesFromDb.map(msg => {
+      // SQLite는 'YYYY-MM-DD HH:MM:SS' 형식으로 저장합니다.
+      // 공백을 'T'로 바꾸고 끝에 'Z'를 붙여 UTC임을 명시합니다.
+      const utcTimestamp = msg.created_at.replace(' ', 'T') + 'Z';
+
+      return {
+          id: msg.id,
+          matchId: msg.matchId,
+          senderId: msg.senderId,
+          content: msg.content,
+          createdAt: utcTimestamp, // UTC 정보가 포함된 시간 문자열
+          updatedAt: msg.updated_at.replace(' ', 'T') + 'Z',
+          senderName: msg.senderName
+      };
+    });
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     res.json(messages);
@@ -313,7 +320,6 @@ app.get('/api/messages/:matchId', async (req, res) => {
     res.status(500).json({ message: '메시지 조회 중 오류 발생' });
   }
 });
-
 
 // ▼▼▼ SSE 기능으로 교체된 부분 ▼▼▼
 let clients = {};
@@ -338,23 +344,48 @@ app.get('/api/chat/connect/:matchId', (req, res) => {
   });
 });
 
-// [POST] /api/chat/message : 새로운 메시지를 보내는 엔드포인트
+
+// [POST] /api/chat/message : 새로운 메시지를 보내는 엔드포인트 (오류 수정)
 app.post('/api/chat/message', async (req, res) => {
   const { matchId, senderId, content, senderName } = req.body;
+
   try {
-    await knex('messages').insert({ matchId, senderId, content });
-    const messageData = { senderId, content, senderName, createdAt: new Date().toISOString() };
+    // 1. DB에 메시지 저장
+    // .returning('id') 부분을 제거하여 SQLite와 호환되도록 수정
+    const [insertedId] = await knex('messages').insert({
+      matchId,
+      senderId,
+      content
+    });
+
+    // 2. 방금 저장된 메시지를 DB에서 즉시 다시 불러옵니다.
+    const savedMessage = await knex('messages').where({ id: insertedId }).first();
+
+    // 3. DB에 실제로 저장된 시간 값을 터미널에 출력합니다.
+    console.log('✅ [DB에 저장된 시간 확인]:', savedMessage.created_at);
+
+    // 4. SSE를 통해 해당 채팅방의 모든 클라이언트에게 메시지 전송
+    const messageData = { 
+      senderId, 
+      content, 
+      senderName, 
+      createdAt: savedMessage.created_at
+    };
+
     if (clients[matchId]) {
       clients[matchId].forEach(client => 
         client.write(`data: ${JSON.stringify(messageData)}\n\n`)
       );
     }
+
     res.status(201).json({ success: true });
   } catch (error) {
+    console.error('[DB] 메시지 저장/확인 중 오류:', error);
     res.status(500).json({ success: false, message: '메시지 저장/전송 중 오류' });
   }
 });
-// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+
 
 // --- 서버 실행 ---
 app.listen(PORT, HOST, () => {
