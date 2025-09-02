@@ -491,3 +491,23 @@ textarea {
   border-top: 1px solid var(--border-color); flex-shrink: 0;
 }
 .chat-footer input { flex-grow: 1; }
+
+/* Rating Info */
+.rating-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.rating-info.large {
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.rating-info .star-rating {
+  color: #ffc107;
+}
+

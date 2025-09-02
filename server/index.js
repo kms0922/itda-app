@@ -98,7 +98,6 @@ app.get('/api/users', async (req, res) => {
     try {
         const users = await knex('users')
             .leftJoin('profiles', 'users.id', 'profiles.userId')
-            // reviews 테이블을 leftJoin하여 후기 통계를 계산합니다.
             .leftJoin('reviews', 'users.id', 'reviews.revieweeId')
             .where('users.userType', targetUserType)
             .select(
@@ -109,10 +108,9 @@ app.get('/api/users', async (req, res) => {
               'profiles.profileImageUrl', 
               'profiles.tags'
             )
-            .groupBy('users.id')
-            // knex.raw를 사용하여 SQL 집계 함수를 직접 실행합니다.
-            .count('reviews.id as reviewCount') // 후기 개수
-            .avg('reviews.rating as avgRating'); // 평균 별점
+            .groupBy('users.id', 'users.name', 'profiles.introduction', 'profiles.region', 'profiles.profileImageUrl', 'profiles.tags')
+            .count('reviews.id as reviewCount')
+            .avg('reviews.rating as avgRating');
 
         res.status(200).json(users);
     } catch (error) { res.status(500).json({ success: false, message: '사용자 목록 조회 중 오류' }); }
@@ -129,7 +127,6 @@ app.get('/api/users/:id', async (req, res) => {
             .first();
 
         if (userProfile) {
-            // 후기 통계를 별도로 계산하여 프로필 정보에 추가합니다.
             const stats = await knex('reviews')
                 .where('revieweeId', id)
                 .count('id as reviewCount')
@@ -137,7 +134,7 @@ app.get('/api/users/:id', async (req, res) => {
                 .first();
 
             userProfile.reviewCount = stats.reviewCount || 0;
-            userProfile.avgRating = stats.avgRating ? parseFloat(stats.avgRating.toFixed(1)) : 0; // 소수점 첫째 자리까지
+            userProfile.avgRating = stats.avgRating ? parseFloat(stats.avgRating.toFixed(1)) : 0;
 
             res.json(userProfile);
         } else {

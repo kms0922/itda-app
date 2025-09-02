@@ -3,11 +3,10 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../App.css';
 
-// 별점 표시 컴포넌트 (재사용)
 const StarRating = ({ rating }) => {
   const fullStars = Math.round(rating || 0);
   return (
-    <div className="star-rating" style={{fontSize: '1rem'}}>
+    <div className="star-rating" style={{fontSize: '1rem', color: '#ffc107'}}>
       {'★★★★★'.slice(0, fullStars)}{'☆☆☆☆☆'.slice(fullStars)}
     </div>
   );
@@ -31,9 +30,7 @@ function UserList() {
   return (
     <div className="App">
       <h1>{currentUser?.userType === 'youth' ? '어르신 찾기' : '청년 찾기'}</h1>
-      <p style={{color: 'var(--text-light)', marginBottom: '3rem'}}>
-        신뢰할 수 있는 파트너를 찾아보세요.
-      </p>
+      <p className="page-subtitle">신뢰할 수 있는 파트너를 찾아보세요.</p>
       <div className="user-list-container">
         {users.length > 0 ? (
           users.map(user => {
@@ -42,18 +39,16 @@ function UserList() {
               <Link to={`/users/${user.id}`} key={user.id} className="card-link">
                 <div className="user-card-new">
                   <div className="card-body">
-                    <img src={user.profileImageUrl || 'https://placehold.co/80x80/E0E0E0/333?text=?'} alt={user.name} className="profile-icon" style={{objectFit: 'cover', width: '80px', height: '80px'}}/>
+                    <img src={user.profileImageUrl || 'https://placehold.co/80x80/E0E0E0/333?text=?'} alt={user.name} className="profile-icon"/>
                     <div className="card-info">
                       <h3>{user.name}</h3>
                       <p>{user.region}</p>
-                      {/* ▼▼▼ 통계 정보 표시 ▼▼▼ */}
-                      <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0'}}>
+                      <div className="rating-info">
                         <StarRating rating={user.avgRating} />
-                        <span style={{color: 'var(--text-light)', fontSize: '0.9rem'}}>
-                          {avgRating} ({user.reviewCount}개의 후기)
+                        <span>
+                          {avgRating} ({user.reviewCount}개 후기)
                         </span>
                       </div>
-                      {/* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */}
                     </div>
                   </div>
                   <div className="card-tags">
